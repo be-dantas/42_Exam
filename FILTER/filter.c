@@ -1,14 +1,73 @@
 #include <stdio.h>
-#include <errno.h>
-#include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <errno.h>
+#include <fcntl.h>
 
-int if_filter(char *str, char *filter, int i)
+#ifndef BUFFER_SIZE
+    #define BUFFER_SIZE 200
+#endif
+
+int ft_strlen(char *str)
+{
+    int i = 0;
+
+    while (str[i])
+        i++;
+    return (i);
+}
+
+char *ft_strdup(char *str)
+{
+    int i = 0;
+    int len = ft_strlen(str);
+    char *new_str;
+
+    new_str = malloc(sizeof(char) * (len + 1));
+    if (!new_str)
+        return (NULL);
+    while (str[i])
+    {
+        new_str[i] = str[i];
+        i++;
+    }
+    new_str[i] = '\0';
+    return (new_str);
+}
+
+char *ft_strjoin(char *s1, char *s2)
+{
+    int i = 0;
+    int j = 0;
+    int len_1 = ft_strlen(s1);
+    int len_2 = ft_strlen(s2);
+    char *new_str;
+
+    new_str = malloc(sizeof(char) * (len_1 + len_2 + 1));
+    if (!new_str)
+        return (NULL);
+    while (s1[i])
+    {
+        new_str[j] = s1[i];
+        i++;
+        j++;
+    }
+    i = 0;
+    while (s2[i])
+    {
+        new_str[j] = s2[i];
+        i++;
+        j++;
+    }
+    new_str[j] = '\0';
+    return (new_str);
+}
+
+int is_filter(char *str, char *filter, int i)
 {
     int j = 0;
 
-    while (filter[j] != '\0')
+    while (filter[j])
     {
         if (str[i] == filter[j])
         {
@@ -21,145 +80,89 @@ int if_filter(char *str, char *filter, int i)
     return (1);
 }
 
-void func_print_result(char *str, char *filter)
+void print_buffer(char *str, char *filter)
 {
-    char *result;
-    int  i = 0;
-    int  x = 0;
-    int  r = 0;
-    int  len_s = 0;
-    int  len_f = 0;
-
-    while (str[len_s] != '\0')
-        len_s++;
-    while (filter[len_f] != '\0')
-        len_f++;
-    result = malloc(sizeof(char) * (len_s + 1));
-    while (str[i])
-    {
-        if (str[i] == filter[0] && if_filter(str, filter, i))
-        {
-            x = 0;
-            while (x < len_f)
-            {
-                result[r] = '*';
-                x++;
-                r++;
-            }
-            i = i + len_f;
-        }
-        else
-        {
-            result[r] = str[i];
-            r++;
-            i++;
-        }
-    }
-    result[r] = '\0';
-    printf("%s", result);
-    free(result);
-}
-
-char *str_join(char *dest, char *str)
-{
-    int  i = 0;
-    int  len1 = 0;
-    int  len2 = 0;
-    char *new_str;
-
-    while (dest[len1] != '\0')
-        len1++;
-    while (str[len2] != '\0')
-        len2++;
-    new_str = malloc(sizeof(char) * (len1 + len2 + 1));
-    while (dest[i] != '\0')
-    {
-        new_str[i] = dest[i];
-        i++;
-    }
-    i = 0;
-    while (str[i] != '\0')
-    {
-        new_str[len1 + i] = str[i];
-        i++;
-    }
-    new_str[len1 + i] = '\0';
-    return (new_str);
-}
-
-char *ft_substr(char *string, int start, int len)
-{
-    char *str;
+    int i = 0;
     int j = 0;
 
-    str = malloc(sizeof(char) * (len + 1));
-    while (j < len)
+    while (str[i])
     {
-        str[j] = string[start + j];
-        j++;
-    }
-    str[j] = '\0';
-    return (str);
-}
-
-int func_read(int fd, char *filter)
-{
-    char     buffer[1024];
-    ssize_t  bytes_read;
-    char    *buffer_print;
-    char    *temp_buffer;
-    char    *temp;
-    char    *rest;
-    int      len_f = 0;
-
-    temp_buffer = NULL;
-    rest = malloc(1);
-    rest[0] = '\0';
-    while (filter[len_f] != '\0')
-        len_f++;
-    while ((bytes_read = read(fd, buffer, 1023)) > 0)
-    {
-        buffer[bytes_read] = '\0';
-
-        if (bytes_read < len_f - 1)
+        if (str[i] == filter[0] && is_filter(str, filter, i))
         {
-            temp = str_join(rest, buffer);
-            free(rest);
-            rest = temp;
+            j = 0;
+            while (filter[j])
+            {
+                str[i] = '*';
+                i++;
+                j++;
+            }
         }
         else
-        {
-            temp_buffer = ft_substr(buffer, 0, bytes_read - (len_f - 1));
-            buffer_print = str_join(rest, temp_buffer);
-            func_print_result(buffer_print, filter);
-    
-            free(temp_buffer);
-            free(buffer_print);
-            free(rest);
-            
-            rest = ft_substr(buffer, bytes_read - (len_f - 1), (len_f - 1));
-        }
+            i++;
     }
-    if (bytes_read == 0 && rest != NULL)
-        func_print_result(rest, filter);
-    else if (bytes_read == -1)
+    printf("%s", str);
+}
+
+int read_print(int fd, char *filter)
+{
+    ssize_t bytes_read = 0;
+    char *buffer;
+    char *temp;
+    char *buffer_print;
+
+    buffer = malloc(sizeof(char) * (BUFFER_SIZE + 1));
+    if (!buffer)
     {
-        free(rest);
-        perror("Read error");
-        return (-1);
+        perror("Error");
+        return (1);
     }
-    free(rest);
+    buffer_print = ft_strdup("");
+    if (!buffer_print)
+    {
+        free(buffer);
+        perror("Error");
+        return (1);
+    }
+    while ((bytes_read = read(fd, buffer, BUFFER_SIZE)) > 0)
+    {
+        buffer[bytes_read] = '\0';
+        temp = ft_strjoin(buffer_print, buffer);
+        if (!temp)
+        {
+            free(buffer);
+            free(buffer_print);
+            perror("Error");
+            return (1);
+        }
+        free(buffer_print);
+        buffer_print = ft_strdup(temp);
+        if (!buffer_print)
+        {
+            free(buffer);
+            free(temp);
+            perror("Error");
+            return (1);
+        }
+        free(temp);
+    }
+    if (bytes_read == -1)
+    {
+        free(buffer);
+        free(buffer_print);
+        perror("Error");
+        return (1);
+    }
+    print_buffer(buffer_print, filter);
+    free(buffer);
+    free(buffer_print);
     return (0);
 }
 
-int main (int argc, char **argv)
+int main(int argc, char **argv)
 {
-    int string;
-
     if (argc != 2 || argv[1][0] == '\0')
         return (1);
-    string = func_read(STDIN_FILENO, argv[1]);
-    if (string == -1)
+    if (read_print(STDIN_FILENO, argv[1]) == 1)
         return (1);
     return (0);
-}   
+}

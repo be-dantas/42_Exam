@@ -1,4 +1,5 @@
 #include <unistd.h>
+#include <stdio.h>
 
 void sort_str(char *str, int i)
 {
@@ -7,7 +8,7 @@ void sort_str(char *str, int i)
 
     while (str[i])
     {
-        j = i + 1;
+        int j = i + 1;
         while (str[j])
         {
             if (str[i] > str[j])
@@ -44,16 +45,16 @@ int successor(char *str, int pivo)
     return (-1);
 }
 
-void if_one_two(char *str)
+void if_one_two(char *str, int len)
 {
     char temp;
 
-    if (ft_strlen(str) == 1)
+    if (len == 1)
     {
         write(1, str, 1);
         write(1, "\n", 1);
     }
-    else if (ft_strlen(str) == 2)
+    else if (len == 2)
     {
         write(1, str, 2);
         write(1, "\n", 1);
@@ -68,13 +69,14 @@ void if_one_two(char *str)
 void permu_print(char *str)
 {
     int i = ft_strlen(str) - 2;
+    int len = ft_strlen(str);
     int pivo = 0;
     int suc = 0;
     char temp;
 
-    if (ft_strlen(str) == 1 || ft_strlen(str) == 2)
+    if (len == 1 || len == 2)
     {
-        if_one_two(str);
+        if_one_two(str, len);
         return ;
     }
     write(1, str, ft_strlen(str));
